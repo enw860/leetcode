@@ -16,12 +16,12 @@
   Input: s = "PAYPALISHIRING", numRows = 4 => Output: "PINALSIGYAHRPI"
 */
 var convert = function(s, numRows) {
-  if (numRows === 0) return "";
+  if (numRows === 0) return '';
   else if (numRows === 1) return s;
 
   var pointer = 0;
   var forward = true;
-  var rows = Array(numRows).fill("");
+  var rows = Array(numRows).fill('');
   for (var i = 0; i < s.length; i++) {
     rows[pointer] += s[i];
 
@@ -37,7 +37,7 @@ var convert = function(s, numRows) {
       }
     }
   }
-  return rows.reduce((acc, val) => acc + val, "");
+  return rows.reduce((acc, val) => acc + val, '');
 };
 
 /*
@@ -62,9 +62,9 @@ const MIN_VALUE = -1 * Math.pow(2, 31);
 var reverse = function(x) {
   if (x < MIN_VALUE || x > MAX_VALUE) return 0;
   var str = x.toString();
-  var mid = str.length % 2 == 0 ? "" : str[Math.floor(str.length / 2)];
-  var firstHalf = "";
-  var restHalf = "";
+  var mid = str.length % 2 == 0 ? '' : str[Math.floor(str.length / 2)];
+  var firstHalf = '';
+  var restHalf = '';
   for (var i = 0; i < Math.floor(str.length / 2); i++) {
     firstHalf = firstHalf + str[str.length - 1 - i];
     restHalf = str[i] + restHalf;
@@ -145,4 +145,90 @@ var isPalindrome = function(x) {
   Input: s = "aa" p = "a" => Output: false
   Input: s = "aa" p = "a*" => Output: true
 */
-var isMatch = function(s, p) {};
+
+var simplifyPattern = p => {
+  return p.split("").reduce((acc, val) => {
+    if(val === "*" && acc[acc.length-1] === "*"){
+      return acc;
+    }else{
+      return acc + val;
+    }
+  }, "");
+}
+
+var nextPattern = p => {
+  if(p === null){
+    return [null, null]; 
+  }else if(p.length < 2){
+    return [p, null];
+  }else if(p[1] === '*'){
+    if(p.length === 2) {
+      return [p, null];
+    }
+    
+    return [p.slice(0, 2), p.slice(2)];
+  }else{
+    return [p.slice(0, 1), p.slice(1)];
+  }
+}
+
+var checkAtomicPattern = (s, p) => {  
+  if(s === null || p.length !== 1){
+    return [false, null];
+  }
+
+  if(p === '.'){
+    return (s.length>0)? [true, s.slice(1)]:[false, null];
+  }else{
+    return [(s[0] === p), (s[0] === p)? s.slice(1):null];
+  }
+}
+
+var checkMatch = (s, p) => {
+  let [matched,uncheckedStr] = [true, s];
+  let [nextP, restP] = nextPattern(p);
+
+  while(uncheckedStr !== null && nextP !== null){
+    if(nextP.length === 2){
+      var i = 1;
+      let [matched1, temp2] = checkAtomicPattern(uncheckedStr, nextP[0]);
+      
+      if(!matched1){
+        return checkMatch(uncheckedStr, restP);
+      }
+
+      while(matched1){
+        if(matched1 && checkMatch(uncheckedStr.slice(i), restP)){
+          return true;
+        }
+        
+        if(i === uncheckedStr.length+1){
+          return false;
+        }
+
+        [matched1, temp2] = checkAtomicPattern(uncheckedStr.slice(i), nextP[0]);
+
+        i++;
+      }
+
+      return false;
+    }else{
+      [matched, uncheckedStr] = checkAtomicPattern(uncheckedStr, nextP);
+      if(!matched) return false;
+
+      [nextP, restP] = nextPattern(restP);
+    }
+  }
+
+  return (uncheckedStr.length === 0 && restP === null);
+}
+
+var isMatch = (s, p) => {
+  if(s === null || p === null){
+    return false;
+  }else if(s === p){
+    return true;
+  }
+
+  return checkMatch(s, simplifyPattern(p));
+}
